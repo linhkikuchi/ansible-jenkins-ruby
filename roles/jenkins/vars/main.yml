@@ -1,0 +1,10 @@
+---
+jenkins_init_file: /etc/sysconfig/jenkins
+jenkins_config_file: /var/lib/jenkins/config.xml
+proxy_env:
+  http_proxy: http://proxy:port_no
+  https_proxy: http://proxy:port_no
+jenkins_home: /var/lib/jenkins
+jenkins_http_port: 8080
+# jenkins_jar_location: /var/lib/jenkins/jenkins-cli.jar
+# jenkins_dl_setting: /var/lib/jenkins/jenkins.model.DownloadSettings.xml

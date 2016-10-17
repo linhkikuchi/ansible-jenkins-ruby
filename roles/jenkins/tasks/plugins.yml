@@ -1,0 +1,88 @@
+---
+#Jenkins doesn't allow updates via CLI, though that is required before plugins
+#can be installed via CLI. See: https://gist.github.com/rowan-m/1026918
+- name: Get the jenkins-cli jarfile from the Jenkins server.
+  get_url:
+    url: "http://{{ ansible_default_ipv4.address }}:{{ jenkins_http_port }}/jnlpJars/jenkins-cli.jar"
+    dest: "{{ jenkins_jar_location }}"
+    owner: jenkins
+    group: jenkins
+    mode: 0755
+  register: jarfile_get
+  until: "'OK' in jarfile_get.msg or 'file already exists' in jarfile_get.msg"
+  retries: 5
+  delay: 10
+  environment: "{{proxy_env}}"
+
+- name: Create Jenkins updates folder.
+  file:
+    path: "{{ jenkins_home }}/updates"
+    owner: jenkins
+    group: jenkins
+    mode: 0755
+    state: directory
+  register: jenkins_plugins_folder_create
+
+- name: Update Jenkins plugin data.
+  shell: curl -L https://updates.jenkins-ci.org/update-center.json | sed '1d;$d'
+  args:
+    creates: "{{ jenkins_home }}/updates/default.json"
+  environment: "{{proxy_env}}"
+  become_user: jenkins
+
+# in jenkins 2.x "Prevent Cross Site Request Forgery exploits" security option (which it should) is enabled
+# when you make a POST request, you have to send a CSRF protection token as an HTTP request header.
+# https://wiki.jenkins-ci.org/display/JENKINS/Remote+access+API#RemoteaccessAPI-CSRFProtection
+
+# - name: get scrum header
+#   get_url:
+#     url: 'http://{{ ansible_default_ipv4.address }}:{{ jenkins_http_port }}/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,":",//crumb)'
+#     dest: "{{ jenkins_home }}/updates/header.json"
+#   environment: "{{proxy_env}}"
+#   become_user: jenkins
+
+# this seems to work better than get_url
+- name: get scrum header
+  shell: wget -q -O /var/lib/jenkins/updates/header.json 'http://{{ ansible_default_ipv4.address }}:{{ jenkins_http_port }}/crumbIssuer/api/xml?xpath=concat(//crumbRequestField,":",//crumb)'
+  environment: "{{proxy_env}}"
+  become_user: jenkins
+
+- name: push json to update url
+  shell: 'curl -X POST -H {{ jenkins_home }}/updates/header.json -d @"{{ jenkins_home }}/updates/default.json" http://{{ ansible_default_ipv4.address }}:{{ jenkins_http_port }}/updateCenter/byId/default/postBack --verbose'
+  environment: "{{proxy_env}}"
+  become_user: jenkins
+
+- name: Install Jenkins plugins
+  command: >
+    java -jar {{ jenkins_jar_location }} -s http://{{ ansible_default_ipv4.address }}:{{ jenkins_http_port }}/ -p {{ proxy_env.http_proxy }}
+    install-plugin {{ item }}
+    creates={{ jenkins_home }}/plugins/{{ item }}.jpi 
+  with_items: 
+   - 'ldap'
+   - 'mailer'
+   - 'github'
+   - 'git'
+   - 'credentials'
+   - 'plain-credentials'
+   - 'token-macro'
+   - 'github-api'
+   - 'checkstyle'
+   - 'rbenv'
+   - 'ruby'
+   - 'ruby-runtime'
+   - 'maven-plugin'
+   - 'javadoc'
+   - 'hipchat'
+   - 'workflow-step-api'
+   - 'junit'
+   - 'matrix-project'
+   - 'mask-passwords'
+   - 'envinject'
+   - 'parameterized-trigger'
+   - 'conditional-buildstep'
+  ignore_errors: yes
+  #plugins change requires a restart, not safe restart
+  #add handlers/main.yml to restart jenkins for this
+  notify: restart jenkins
+  become_user: jenkins
+  # environment: "{{proxy_env}}"

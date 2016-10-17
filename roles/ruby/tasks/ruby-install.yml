@@ -1,0 +1,14 @@
+- name: Checks if target ruby is installed
+  shell: cd; bash -lc "rbenv versions | grep {{ version }} | tr '*' ' ' | sed -e 's/\s\+//' | cut -f1 -d' '"
+  ignore_errors: yes
+  register: ruby_is_installed
+
+- name: Installs ruby
+  shell: cd; bash -lc "{{ proxy_for_rbenv }} CONFIGURE_OPTS=--disable-install-rdoc rbenv install {{ version }}"
+  when: ruby_is_installed.stdout != version
+  # Takes no more than 600 secs
+  async: 600
+  poll: 30
+
+- name: Adds .gemrc
+  copy: src=gemrc dest=~/.gemrc owner=jenkins group=jenkins mode=0750

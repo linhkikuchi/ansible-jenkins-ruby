@@ -1,0 +1,3 @@
+# Installing required ruby versions
+- include: ruby-install.yml
+  become_user: jenkins

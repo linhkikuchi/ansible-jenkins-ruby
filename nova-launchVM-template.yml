@@ -1,0 +1,20 @@
+- name: launch a compute instance
+  hosts: localhost
+  tasks:
+  - name: launch an instance
+    os_server:
+      state: present
+      auth:
+        auth_url: 
+        username: 
+        password: 
+        project_name: 
+      name: 
+      region_name: 
+      image: 
+      timeout: 200
+      flavor: 
+      nics:
+        - net-id: 
+      security_groups: default
+      auto_floating_ip: yes

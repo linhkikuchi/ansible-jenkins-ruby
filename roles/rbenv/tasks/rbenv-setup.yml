@@ -1,0 +1,27 @@
+- name: set git http proxy
+  action: command git config --global http.proxy "{{ proxy }}"
+
+- name: set git https proxy
+  action: command git config --global https.proxy "{{ proxy }}"
+
+- name: Installs rbenv
+  git: repo=https://github.com/rbenv/rbenv.git dest=~/.rbenv
+  
+- name: Ensure fragments bash dir exists
+  file: dest=~/.bash.d/ state=directory
+
+- name: Installs rbenv bash file
+  copy: src=rbenv.bash dest=~/.bash.d/rbenv.bash mode=700 owner=jenkins group=jenkins
+
+- name: Source rbenv bash file in dot bashrc
+  lineinfile: dest=~/.bash_profile regexp="rbenv" insertafter=EOF line="source ~/.bash.d/rbenv.bash" create=yes
+
+- name: Creates plugin directory
+  file: path=~/.rbenv/plugins/ owner=jenkins group=jenkins mode=0755 state=directory
+
+- name: Installs ruby-build
+  git: repo=https://github.com/sstephenson/ruby-build.git dest=~/.rbenv/plugins/ruby-build
+
+# - name: Installs ruby building dependencies
+#   apt: name={{ item }} state=installed update-cache=yes
+#   with_items: ruby_deps

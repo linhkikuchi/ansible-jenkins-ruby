@@ -1,0 +1,6 @@
+# rbenv setup
+- include: rbenv-dependency.yml
+
+- include: rbenv-setup.yml
+  become_user: jenkins
+

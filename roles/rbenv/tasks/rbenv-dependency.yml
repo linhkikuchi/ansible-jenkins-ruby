@@ -1,0 +1,24 @@
+- name: Installs ruby building dependencies
+  yum: name={{ item }} state=installed
+  with_items: 
+    - autoconf
+    - automake
+    - make
+    - bison
+    - bzip2
+    - gcc
+    - gcc-c++
+    #- libssl-dev
+    #- libyaml-dev
+    #- libreadline-dev
+    - libtool
+    # - libxml2-dev
+    # - libxml2
+    # - libxslt
+    # - libxslt-dev
+    - nodejs
+    - openssl
+    - openssl-devel
+    - readline-devel
+    # - zlib1g
+    # - zlib1g-dev

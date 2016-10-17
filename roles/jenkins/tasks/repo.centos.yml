@@ -1,0 +1,16 @@
+---
+- name: Update system
+  yum: name=* state=latest
+
+- name: Import jenkins key
+  rpm_key:
+    key: http://pkg.jenkins-ci.org/redhat/jenkins-ci.org.key
+    state: present
+    validate_certs: no
+  environment: "{{proxy_env}}"
+
+- name: Get jenkins repo for ansible
+  get_url:
+    url: http://pkg.jenkins-ci.org/redhat/jenkins.repo 
+    dest: /etc/yum.repos.d/jenkins.repo
+  environment: "{{proxy_env}}"

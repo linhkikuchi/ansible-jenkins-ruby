@@ -1,0 +1,26 @@
+---
+- name: Remove Jenkins security init scripts after first startup.
+  file:
+    path: "{{ jenkins_home }}/init.groovy.d/basic-security.groovy"
+    state: absent
+
+- name: Ensure Security is disabled in Jenkins config.
+  lineinfile:
+    backrefs: yes
+    dest: "{{ jenkins_config_file }}"
+    regexp: '^  <useSecurity>true</useSecurity>'
+    line: '  <useSecurity>false</useSecurity>'
+    state: present
+  register: jenkins_init_config1
+
+- name: Ensure SetupWizard is disabled in Jenkins config.
+  lineinfile:
+    backrefs: yes
+    dest: "{{ jenkins_init_file }}"
+    regexp: '^JENKINS_JAVA_OPTIONS="(.*)(?<! -Djenkins.install.runSetupWizard=false)"$'
+    line: 'JENKINS_JAVA_OPTIONS="\1 -Djenkins.install.runSetupWizard=false"'
+  register: jenkins_init_config2
+
+- name: Immediately restart Jenkins on init config changes.
+  service: name=jenkins state=restarted
+  when: jenkins_init_config1.changed or jenkins_init_config2.changed

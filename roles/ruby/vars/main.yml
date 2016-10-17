@@ -1,0 +1,2 @@
+version: 2.2.2
+proxy_for_rbenv: http_proxy=proxy:port_no https_proxy=proxy_port_no
